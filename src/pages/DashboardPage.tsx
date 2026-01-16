@@ -17,11 +17,14 @@ export function DashboardPage() {
     const tasksTotal = tasks.length;
 
     // Gym Logic (Mock: Assume first plan is today's for demo)
-    const todaysWorkout = gymPlans[0];
+    const todaysWorkout = gymPlans.length > 0 ? gymPlans[0] : null;
 
     // Study Logic
-    const nextExam = exams.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-    const daysUntilExam = Math.ceil((new Date(nextExam.date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const sortedExams = [...exams].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const nextExam = sortedExams.length > 0 ? sortedExams[0] : null;
+    const daysUntilExam = nextExam 
+        ? Math.ceil((new Date(nextExam.date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -43,8 +46,8 @@ export function DashboardPage() {
                         <Dumbbell className="h-5 w-5" />
                         <span className="font-semibold">Gym</span>
                     </div>
-                    <p className="text-lg font-medium text-white">{todaysWorkout.dayName}</p>
-                    <p className="text-sm text-zinc-500">{todaysWorkout.exercises.length} Exercises</p>
+                    <p className="text-lg font-medium text-white">{todaysWorkout ? todaysWorkout.dayName : 'No Plan'}</p>
+                    <p className="text-sm text-zinc-500">{todaysWorkout ? todaysWorkout.exercises.length : 0} Exercises</p>
                 </div>
 
                 {/* Study Stat */}
@@ -56,8 +59,8 @@ export function DashboardPage() {
                         <BookOpen className="h-5 w-5" />
                         <span className="font-semibold">Study</span>
                     </div>
-                    <p className="text-lg font-medium text-white">{nextExam.name}</p>
-                    <p className="text-sm text-zinc-500">{daysUntilExam} days left</p>
+                    <p className="text-lg font-medium text-white">{nextExam ? nextExam.name : 'No Exams'}</p>
+                    <p className="text-sm text-zinc-500">{nextExam ? `${daysUntilExam} days left` : 'All caught up'}</p>
                 </div>
 
                 {/* Tasks Stat */}

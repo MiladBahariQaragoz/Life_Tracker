@@ -1,0 +1,143 @@
+{
+  "gymPlans": [
+    {
+      "id": "563437d7-6ee0-4b53-8f2b-22fd75019d55",
+      "dayName": "legs",
+      "exercises": [
+        {
+          "id": "squat",
+          "name": "Squat",
+          "targetSets": 3,
+          "targetReps": 10,
+          "lastWeight": 0,
+          "lastReps": 0
+        }
+      ]
+    }
+  ],
+  "exams": [
+    {
+      "id": "calc",
+      "name": "Calculus II",
+      "date": "2026-03-15",
+      "topics": [
+        {
+          "id": "t1",
+          "name": "Integration Techniques",
+          "sessionsCompleted": 3,
+          "totalSessionsInitial": 8
+        },
+        {
+          "id": "t2",
+          "name": "Series & Sequences",
+          "sessionsCompleted": 0,
+          "totalSessionsInitial": 10
+        }
+      ]
+    },
+    {
+      "id": "physics",
+      "name": "Physics I",
+      "date": "2026-03-20",
+      "topics": [
+        {
+          "id": "p1",
+          "name": "Mechanics",
+          "sessionsCompleted": 5,
+          "totalSessionsInitial": 15
+        }
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1",
+      "title": "Review lecture notes",
+      "priority": "medium",
+      "completed": false,
+      "isMinimum": true
+    },
+    {
+      "id": "2",
+      "title": "Buy groceries",
+      "priority": "low",
+      "completed": false,
+      "isMinimum": false
+    },
+    {
+      "id": "3",
+      "title": "Submit assignment",
+      "priority": "high",
+      "completed": false,
+      "isMinimum": true
+    },
+    {
+      "id": "test-999",
+      "title": "Test Persistence",
+      "priority": "medium",
+      "completed": false,
+      "isMinimum": false
+    }
+  ],
+  "gymMoves": [
+    {
+      "pageIndex": 5,
+      "name": "Bench Press",
+      "group": "Push"
+    },
+    {
+      "pageIndex": 6,
+      "name": "Overhead Press",
+      "group": "Push"
+    },
+    {
+      "pageIndex": 10,
+      "name": "Deadlift",
+      "group": "Pull"
+    },
+    {
+      "pageIndex": 12,
+      "name": "Barbell Row",
+      "group": "Pull"
+    },
+    {
+      "pageIndex": 15,
+      "name": "Squat",
+      "group": "Legs"
+    },
+    {
+      "pageIndex": 17,
+      "name": "Incline Bench",
+      "group": "Push"
+    },
+    {
+      "pageIndex": 22,
+      "name": "Bicep Curl",
+      "group": "Arm"
+    },
+    {
+      "pageIndex": 25,
+      "name": "Tricep Extension",
+      "group": "Arm"
+    }
+  ],
+  "gymSessions": [
+    {
+      "timestamp": "2026-01-16T12:34:12.817Z",
+      "planId": "push-1",
+      "exerciseId": "bp",
+      "weight": 80,
+      "reps": 8,
+      "feeling": ""
+    },
+    {
+      "timestamp": "2026-01-16T12:34:20.862Z",
+      "planId": "push-1",
+      "exerciseId": "bp",
+      "weight": 80,
+      "reps": 8,
+      "feeling": "easy"
+    }
+  ],
+  "studySessions": []
+}
