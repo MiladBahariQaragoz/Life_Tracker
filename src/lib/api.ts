@@ -97,7 +97,7 @@ export const api = {
     /**
      * Sync tasks (full overwrite for now) - DEPRECATED for ADD/DELETE, keeping for bulk sync if needed
      */
-    async syncTasks(localTasks: Task[]) {
+    async syncTasks(_localTasks: Task[]) {
         if (!API_URL) return;
         // return post('tasks/sync', { localTasks });
     }

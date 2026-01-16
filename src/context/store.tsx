@@ -1,9 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import {
-    MOCK_GYM_DATA,
-    MOCK_EXAMS,
-    MOCK_TASKS,
-    MOCK_GYM_MOVES,
     type GymPlan,
     type Exam,
     type Task
@@ -17,7 +13,7 @@ type StoreContextType = {
     gymMoves: { pageIndex: number; name: string; group: string; imageUrl?: string; }[];
     loading: boolean;
     toggleTask: (id: string) => void;
-    logSet: (planId: string, exerciseId: string, weight: number, reps: number, feeling: string) => void;
+    logSet: (planId: string, exerciseId: string, weight: number, reps: number, feeling?: string) => void;
     logStudySession: (examId: string, topicId: string, quality: 'light' | 'normal' | 'deep') => void;
     // New Actions
     addGymPlan: (dayName: string) => void;
@@ -160,7 +156,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
 
 
-    const logSet = (planId: string, exerciseId: string, weight: number, reps: number, feeling: string) => {
+    const logSet = (planId: string, exerciseId: string, weight: number, reps: number, feeling: string = 'normal') => {
         // Optimistic Update
         setGymPlans(prev => prev.map(plan => {
             if (plan.id !== planId) return plan;

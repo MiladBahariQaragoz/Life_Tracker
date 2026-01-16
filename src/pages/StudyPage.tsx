@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../context/store';
-import { BookOpen, Calendar, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { Calendar, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '../lib/utils';
