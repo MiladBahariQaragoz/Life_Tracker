@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const db = require('./db');
+const crypto = require('crypto');
 
 const movesData = [
     { pageIndex: 6, name: "Bench Press", group: "Chest" },
@@ -58,43 +58,40 @@ const movesData = [
 async function main() {
     console.log(`Starting seed of ${movesData.length} moves...`);
 
-    // Optional: Clear existing if you want a fresh start
-    // await prisma.gymMoveReference.deleteMany({}); 
+    try {
+        await db.initDb();
 
-    for (const move of movesData) {
-        // Check if exists to avoid duplicates
-        const existing = await prisma.gymMoveReference.findFirst({
-            where: { name: move.name }
-        });
+        for (const move of movesData) {
+            // Check if exists to avoid duplicates
+            const res = await db.query('SELECT * FROM GymMoveReference WHERE name = $1', [move.name]);
+            const existing = res.rows[0];
 
-        if (existing) {
-            console.log(`Update: ${move.name}`);
-            await prisma.gymMoveReference.update({
-                where: { id: existing.id },
-                data: {
-                    group: move.group,
-                    pageIndex: move.pageIndex,
-                    imageUrl: `/gym_moves/ExerciseBook_page-00${move.pageIndex}.jpg` // Helper for image url
-                }
-            });
-        } else {
-            console.log(`Create: ${move.name}`);
-            await prisma.gymMoveReference.create({
-                data: {
-                    ...move,
-                    imageUrl: `/gym_moves/ExerciseBook_page-00${move.pageIndex}.jpg`
-                }
-            });
+            const imageUrl = `/gym_moves/ExerciseBook_page-00${move.pageIndex}.jpg`;
+
+            if (existing) {
+                console.log(`Update: ${move.name}`);
+                await db.query(`
+                    UPDATE GymMoveReference 
+                    SET "group" = $1, pageIndex = $2, imageUrl = $3
+                    WHERE id = $4
+                `, [move.group, move.pageIndex, imageUrl, existing.id]);
+            } else {
+                console.log(`Create: ${move.name}`);
+                // Generate simple ID from name
+                const id = move.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+                await db.query(`
+                    INSERT INTO GymMoveReference (id, name, "group", pageIndex, imageUrl)
+                    VALUES ($1, $2, $3, $4, $5)
+                `, [id, move.name, move.group, move.pageIndex, imageUrl]);
+            }
         }
+        console.log('Done!');
+    } catch (e) {
+        console.error('Seeding failed:', e);
+    } finally {
+        process.exit(0);
     }
-    console.log('Done!');
 }
 
-main()
-    .catch(e => {
-        console.error(e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+main();

@@ -1,123 +1,168 @@
+const { Pool } = require('pg');
+require('dotenv').config();
 
-const Database = require('better-sqlite3');
-const path = require('path');
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    // If you don't use DATABASE_URL, you can use individual params:
+    // user: process.env.PGUSER,
+    // host: process.env.PGHOST,
+    // database: process.env.PGDATABASE,
+    // password: process.env.PGPASSWORD,
+    // port: process.env.PGPORT,
+});
 
-const dbPath = path.resolve(__dirname, 'database.db');
-const db = new Database(dbPath); // verbose: console.log
+// Test connection
+pool.on('error', (err, client) => {
+    console.error('Unexpected error on idle client', err);
+    process.exit(-1);
+});
 
-// WAL mode for better performance
-db.pragma('journal_mode = WAL');
-// Enable Foreign Keys for Cascade actions
-db.pragma('foreign_keys = ON');
+const initDb = async () => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
 
-// Initialize Tables
-db.exec(`
-    CREATE TABLE IF NOT EXISTS GymPlan (
-        id TEXT PRIMARY KEY,
-        dayName TEXT NOT NULL
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS GymPlan (
+                id VARCHAR(255) PRIMARY KEY,
+                dayName VARCHAR(255) NOT NULL
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS GymExercise (
-        id TEXT PRIMARY KEY,
-        planId TEXT NOT NULL,
-        name TEXT NOT NULL,
-        targetSets INTEGER NOT NULL,
-        targetReps INTEGER NOT NULL,
-        lastWeight REAL DEFAULT 0,
-        lastReps INTEGER DEFAULT 0,
-        FOREIGN KEY (planId) REFERENCES GymPlan(id) ON DELETE CASCADE
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS GymExercise (
+                id VARCHAR(255) PRIMARY KEY,
+                planId VARCHAR(255) NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                targetSets INTEGER NOT NULL,
+                targetReps INTEGER NOT NULL,
+                lastWeight REAL DEFAULT 0,
+                lastReps INTEGER DEFAULT 0,
+                FOREIGN KEY (planId) REFERENCES GymPlan(id) ON DELETE CASCADE
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS GymSession (
-        id TEXT PRIMARY KEY,
-        workoutPlanId TEXT NOT NULL,
-        date TEXT DEFAULT (datetime('now')),
-        startTime TEXT,
-        endTime TEXT,
-        preWorkoutState TEXT,
-        xp INTEGER DEFAULT 0,
-        xpBreakdown TEXT DEFAULT '[]'
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS GymSession (
+                id VARCHAR(255) PRIMARY KEY,
+                workoutPlanId VARCHAR(255) NOT NULL,
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                startTime TIMESTAMP,
+                endTime TIMESTAMP,
+                preWorkoutState VARCHAR(255),
+                xp INTEGER DEFAULT 0,
+                xpBreakdown TEXT DEFAULT '[]'
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS GymWeeklySchedule (
-        id TEXT PRIMARY KEY,
-        date TEXT NOT NULL,
-        planId TEXT NOT NULL,
-        isDone INTEGER DEFAULT 0,
-        FOREIGN KEY (planId) REFERENCES GymPlan(id) ON DELETE CASCADE
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS GymWeeklySchedule (
+                id VARCHAR(255) PRIMARY KEY,
+                date DATE NOT NULL,
+                planId VARCHAR(255) NOT NULL,
+                isDone INTEGER DEFAULT 0,
+                FOREIGN KEY (planId) REFERENCES GymPlan(id) ON DELETE CASCADE
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS GymSet (
-        id TEXT PRIMARY KEY,
-        sessionId TEXT NOT NULL,
-        exerciseId TEXT NOT NULL,
-        weight REAL NOT NULL,
-        reps INTEGER NOT NULL,
-        rpe INTEGER,
-        restInterval INTEGER,
-        feeling TEXT,
-        FOREIGN KEY (sessionId) REFERENCES GymSession(id) ON DELETE CASCADE
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS GymSet (
+                id VARCHAR(255) PRIMARY KEY,
+                sessionId VARCHAR(255) NOT NULL,
+                exerciseId VARCHAR(255) NOT NULL,
+                weight REAL NOT NULL,
+                reps INTEGER NOT NULL,
+                rpe INTEGER,
+                restInterval INTEGER,
+                feeling TEXT,
+                FOREIGN KEY (sessionId) REFERENCES GymSession(id) ON DELETE CASCADE
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS GymMoveReference (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        "group" TEXT NOT NULL,
-        pageIndex INTEGER NOT NULL,
-        imageUrl TEXT
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS GymMoveReference (
+                id VARCHAR(255) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                "group" VARCHAR(255) NOT NULL,
+                pageIndex INTEGER NOT NULL,
+                imageUrl TEXT
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS Exam (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        date TEXT NOT NULL
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS Exam (
+                id VARCHAR(255) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                date TIMESTAMP NOT NULL
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS ExamTopic (
-        id TEXT PRIMARY KEY,
-        examId TEXT NOT NULL,
-        name TEXT NOT NULL,
-        totalSessionsGoal INTEGER NOT NULL,
-        sessionsCompleted INTEGER DEFAULT 0,
-        FOREIGN KEY (examId) REFERENCES Exam(id) ON DELETE CASCADE
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS ExamTopic (
+                id VARCHAR(255) PRIMARY KEY,
+                examId VARCHAR(255) NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                totalSessionsGoal INTEGER NOT NULL,
+                sessionsCompleted INTEGER DEFAULT 0,
+                FOREIGN KEY (examId) REFERENCES Exam(id) ON DELETE CASCADE
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS StudySession (
-        id TEXT PRIMARY KEY,
-        topicId TEXT NOT NULL,
-        quality TEXT NOT NULL,
-        startTime TEXT DEFAULT (datetime('now')),
-        endTime TEXT,
-        environment TEXT,
-        interruptions INTEGER DEFAULT 0,
-        preSessionActivity TEXT,
-        xp INTEGER DEFAULT 0,
-        xpBreakdown TEXT DEFAULT '[]',
-        FOREIGN KEY (topicId) REFERENCES ExamTopic(id) ON DELETE CASCADE
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS StudySession (
+                id VARCHAR(255) PRIMARY KEY,
+                topicId VARCHAR(255) NOT NULL,
+                quality VARCHAR(255) NOT NULL,
+                startTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                endTime TIMESTAMP,
+                environment VARCHAR(255),
+                interruptions INTEGER DEFAULT 0,
+                preSessionActivity TEXT,
+                xp INTEGER DEFAULT 0,
+                xpBreakdown TEXT DEFAULT '[]',
+                FOREIGN KEY (topicId) REFERENCES ExamTopic(id) ON DELETE CASCADE
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS Task (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        priority TEXT NOT NULL,
-        importance TEXT DEFAULT 'medium',
-        completed INTEGER DEFAULT 0,
-        isMinimum INTEGER DEFAULT 0,
-        dueDate TEXT,
-        calendarEventId TEXT
-    );
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS Task (
+                id VARCHAR(255) PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                priority VARCHAR(255) NOT NULL,
+                importance VARCHAR(255) DEFAULT 'medium',
+                completed INTEGER DEFAULT 0,
+                isMinimum INTEGER DEFAULT 0,
+                dueDate TIMESTAMP,
+                calendarEventId VARCHAR(255)
+            );
+        `);
 
-    CREATE TABLE IF NOT EXISTS UserXP (
-        id TEXT PRIMARY KEY,
-        totalXP INTEGER DEFAULT 0,
-        level INTEGER DEFAULT 1
-    );
-`);
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS UserXP (
+                id VARCHAR(255) PRIMARY KEY,
+                totalXP INTEGER DEFAULT 0,
+                level INTEGER DEFAULT 1
+            );
+        `);
 
-// Seed Initial User if not exists
-const userCheck = db.prepare('SELECT id FROM UserXP WHERE id = ?').get('user');
-if (!userCheck) {
-    db.prepare('INSERT INTO UserXP (id, totalXP, level) VALUES (?, ?, ?)').run('user', 0, 1);
-}
+        // Seed Initial User if not exists
+        const userCheck = await client.query('SELECT id FROM UserXP WHERE id = $1', ['user']);
+        if (userCheck.rows.length === 0) {
+            await client.query('INSERT INTO UserXP (id, totalXP, level) VALUES ($1, $2, $3)', ['user', 0, 1]);
+        }
 
-module.exports = db;
+        await client.query('COMMIT');
+        console.log('✅ Database schema initialized');
+    } catch (e) {
+        await client.query('ROLLBACK');
+        console.error('❌ Database Initialization Failed:', e);
+    } finally {
+        client.release();
+    }
+};
+
+module.exports = {
+    pool,
+    query: (text, params) => pool.query(text, params),
+    initDb
+};
