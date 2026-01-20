@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --- GYM ---
+
+model GymPlan {
+  id        String        @id @default(uuid())
+  dayName   String
+  exercises GymExercise[]
+}
+
+model GymExercise {
+  id           String @id
+  planId       String
+  name         String
+  targetSets   Int
+  targetReps   Int
+  lastWeight   Float  @default(0)
+  lastReps     Int    @default(0)
+
+  plan         GymPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+}
+
+model GymSession {
+  id              String   @id @default(uuid())
+  workoutPlanId   String
+  date            DateTime @default(now())
+  startTime       DateTime?
+  endTime         DateTime?
+  preWorkoutState String?   // "Energized", "Tired", etc.
+  xp              Int       @default(0)
+  xpBreakdown     String    @default("[]") // JSON
+
+  sets            GymSet[]
+}
+
+model GymSet {
+  id           String @id @default(uuid())
+  sessionId    String
+  exerciseId   String
+  weight       Float
+  reps         Int
+  rpe          Int?    // 1-10
+  restInterval Int?    // Seconds
+  feeling      String? // Legacy or extra notes
+
+  session      GymSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model GymMoveReference {
+  id        String @id @default(uuid())
+  name      String
+  group     String // "Push", "Pull", "Legs"
+  pageIndex Int
+  imageUrl  String?
+}
+
+// --- STUDY ---
+
+model Exam {
+  id      String      @id @default(uuid())
+  name    String
+  date    DateTime
+  topics  ExamTopic[]
+}
+
+model ExamTopic {
+  id                  String         @id @default(uuid())
+  examId              String
+  name                String
+  totalSessionsGoal   Int
+  sessionsCompleted   Int            @default(0)
+
+  exam                Exam           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  sessions            StudySession[]
+}
+
+model StudySession {
+  id                 String    @id @default(uuid())
+  topicId            String
+  quality            String    // "light", "normal", "deep"
+  startTime          DateTime  @default(now())
+  endTime            DateTime?
+  environment        String?   // "Home", "Library", etc.
+  interruptions      Int       @default(0)
+  preSessionActivity String?
+  xp                 Int       @default(0)
+  xpBreakdown        String    @default("[]") // JSON
+
+  topic              ExamTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+}
+
+// --- TASKS ---
+
+model Task {
+  id              String   @id @default(uuid())
+  title           String
+  priority        String   // "low", "medium", "high"
+  importance      String   @default("medium") // "low", "medium", "high"
+  completed       Boolean  @default(false)
+  isMinimum       Boolean  @default(false)
+  dueDate         DateTime?
+  calendarEventId String?
+}
+
+model UserXP {
+  id      String @id @default("user")
+  totalXP Int    @default(0)
+  level   Int    @default(1)
+}

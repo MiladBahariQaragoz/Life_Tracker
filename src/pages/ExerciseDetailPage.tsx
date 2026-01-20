@@ -14,6 +14,8 @@ export function ExerciseDetailPage() {
 
     const [weight, setWeight] = useState<string>('');
     const [reps, setReps] = useState<string>('');
+    const [rpe, setRpe] = useState<string>('');
+    const [rest, setRest] = useState<string>('');
     const [isLogged, setIsLogged] = useState(false);
 
     // Auto-fill with last stats
@@ -29,7 +31,15 @@ export function ExerciseDetailPage() {
     const handleLog = () => {
         if (!planId || !exerciseId) return;
 
-        logSet(planId, exerciseId, Number(weight), Number(reps));
+        logSet(
+            planId,
+            exerciseId,
+            Number(weight),
+            Number(reps),
+            'normal',
+            rpe ? Number(rpe) : undefined,
+            rest ? Number(rest) : undefined
+        );
         setIsLogged(true);
 
         // Quick feedback reset or navigation? User rule: "Quick log set interaction"
@@ -97,6 +107,27 @@ export function ExerciseDetailPage() {
                             type="number"
                             value={reps}
                             onChange={(e) => setReps(e.target.value)}
+                            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-center text-2xl font-bold text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-400">RPE (1-10)</label>
+                        <input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={rpe}
+                            onChange={(e) => setRpe(e.target.value)}
+                            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-center text-2xl font-bold text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-400">Rest (s)</label>
+                        <input
+                            type="number"
+                            value={rest}
+                            placeholder="60"
+                            onChange={(e) => setRest(e.target.value)}
                             className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-center text-2xl font-bold text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         />
                     </div>

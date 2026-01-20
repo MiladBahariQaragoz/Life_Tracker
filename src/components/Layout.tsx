@@ -1,6 +1,10 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { LayoutDashboard, Dumbbell, BookOpen, CheckSquare } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { HolographicOverlay } from './HolographicOverlay';
+import { useUserStats } from '../context/UserStatsContext';
+import { AiCoachModal } from './AiCoachModal';
+import { SystemLog } from './SystemLog';
 
 const NAV_ITEMS = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
@@ -10,13 +14,48 @@ const NAV_ITEMS = [
 ];
 
 export function Layout() {
+    const { stats } = useUserStats();
+
+    // Level Progress
+    // We didn't save "progress to next level" in stats directly as a percentage, but we have nextLevelXp (total XP needed for next level). 
+    // Wait, nextLevelXp in my context definition was "XP needed for NEXT level".
+    // Current Level L starts at 100 * (L-1)^2. Next starts at 100 * L^2.
+    // Range is 100 * L^2 - 100 * (L-1)^2.
+    // Progress = (XP - StartXP) / (NextXP - StartXP).
+
+    const currentLevelBaseXp = 100 * Math.pow(stats.level - 1, 2);
+    const nextLevelTotalXp = 100 * Math.pow(stats.level, 2);
+    const levelRange = nextLevelTotalXp - currentLevelBaseXp;
+    const currentProgressXp = stats.xp - currentLevelBaseXp;
+    const progressPercent = Math.min(100, Math.max(0, (currentProgressXp / levelRange) * 100));
+
     return (
         <div className="flex h-screen w-full flex-col md:flex-row bg-zinc-950 text-zinc-200">
+            <HolographicOverlay />
+            <AiCoachModal />
+            <SystemLog />
+
             {/* Sidebar (Desktop) */}
             <aside className="hidden w-20 flex-col items-center border-r border-zinc-800 py-6 md:flex lg:w-64 lg:items-start lg:px-6">
-                <div className="mb-8 text-xl font-bold tracking-tight text-white lg:text-2xl">
-                    <span className="lg:hidden">LT</span>
-                    <span className="hidden lg:block">LifeTracker</span>
+                <div className="mb-8 w-full">
+                    <div className="text-xl font-bold tracking-tight text-white lg:text-2xl mb-2 flex items-center gap-2">
+                        <span className="lg:hidden">LT</span>
+                        <span className="hidden lg:block">LifeTracker</span>
+                    </div>
+
+                    {/* Level Bar */}
+                    <div className="hidden lg:block w-full">
+                        <div className="flex justify-between text-xs text-zinc-500 mb-1">
+                            <span>Lvl {stats.level}</span>
+                            <span>{Math.floor(progressPercent)}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)] transition-all duration-1000"
+                                style={{ width: `${progressPercent}%` }}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <nav className="flex w-full flex-col gap-2">

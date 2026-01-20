@@ -1,0 +1,14 @@
+--- Testing Calendar Integration ---
+Calendar ID: miladb19999@gmail.com
+Key File: c:\Users\milaa\Documents\Life_Tracker\server\service-account.json
+
+[1] Attempting to WRITE test event...
+✅ WRITE SUCCESS. Event ID: bo7gfnklr87i66ob94rdegcbog
+
+[2] Attempting to READ events...
+✅ READ SUCCESS. Found 5 events.
+   - [2026-01-19T09:00:00+01:00] Work in person
+   - [2026-01-19T10:00:00+01:00] Weekly Meeting (Tasks of the Week)
+   - [2026-01-19T20:00:00+01:00] تمام
+   - [2026-01-19T22:00:00+01:00] what
+   - [2026-01-19T22:09:10+01:00] Antigravity Connectivity Test 22:09:10

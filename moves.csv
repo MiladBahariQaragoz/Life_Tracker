@@ -1,0 +1,52 @@
+Page,Move Name,Group
+06:,Bench Press,Chest
+07:,Cable Bench Press,Chest
+08:,Converging Bench Press,Chest
+09:,Incline Bench Press,Chest
+10:,Cable Incline Bench Press,Chest
+11:,Converging Incline Press,Chest
+12:,Decline Bench Press,Chest
+13:,Cable Decline Bench Press,Chest
+14:,Converging Decline Bench Press,Chest
+15:,Self Stabilizing Chest Press,Chest
+16:,Cable Pec Fly,Chest
+17:,Cable Incline Fly,Chest
+18:,Cable Low Fly,Chest
+20:,Shoulder Press,Shoulders
+21:,Cable Shoulder Press,Shoulders
+22:,Converging Shoulder Press,Shoulders
+23:,Cable Lateral Raise,Shoulders
+24:,Cable Front Raise,Shoulders
+25:,Standing Cable Lateral Raise,Shoulders
+26:,Standing Front Raise,Shoulders
+27:,Upright Row,Shoulders
+28:,Shrugs,Shoulders
+29:,External Rotator,Shoulders
+30:,Internal Rotator,Shoulders
+32:,Lat Pull Down,Back
+33:,Low Cable Row,Back
+34:,Mid Row,Back
+35:,One Arm Row,Back
+36:,Front Lat Pullover,Back
+37:,Seated Cable Mid Row,Back
+38:,Self Stabilizing Mid Row,Back
+40:,Cable Arm Curl,Arms
+41:,Standing Bar Curl,Arms
+42:,Overhead Biceps Curl,Arms
+43:,Arm Curl From Mid Pulley,Arms
+44:,Triceps Pushdown,Arms
+45:,Triceps Extension,Arms
+46:,Triceps Extension From High Pulley,Arms
+47:,Triceps Kickback,Arms
+49:,Ab Crunch,Core
+50:,Reverse Crunch (Seated Knee Raise),Core
+51:,Oblique Twist,Core
+52:,Side Bends,Core
+54:,Leg Extension,Legs
+55:,Standing Leg Curl,Legs
+56:,Seated Leg Curl,Legs
+57:,Leg Press,Legs
+58:,Calf Raise,Legs
+59:,Hip Adduction,Legs
+60:,Hip Abduction,Legs
+61:,Glute Kick,Legs

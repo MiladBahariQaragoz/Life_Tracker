@@ -2,29 +2,39 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import {
     type GymPlan,
     type Exam,
-    type Task
-} from '../data/mock';
+    type Task,
+    type GymMove
+} from '../types';
 import { api } from '../lib/api';
 
 type StoreContextType = {
     gymPlans: GymPlan[];
     exams: Exam[];
     tasks: Task[];
-    gymMoves: { pageIndex: number; name: string; group: string; imageUrl?: string; }[];
+    gymMoves: GymMove[];
     loading: boolean;
-    toggleTask: (id: string) => void;
-    logSet: (planId: string, exerciseId: string, weight: number, reps: number, feeling?: string) => void;
-    logStudySession: (examId: string, topicId: string, quality: 'light' | 'normal' | 'deep') => void;
+    toggleTask: (id: string) => Promise<any>;
+    logSet: (planId: string, exerciseId: string, weight: number, reps: number, feeling?: string, rpe?: number, restInterval?: number) => Promise<any>;
+    logStudySession: (examId: string, topicId: string, quality: 'light' | 'normal' | 'deep', environment?: string, interruptions?: number, preSessionActivity?: string) => Promise<any>;
     // New Actions
-    addGymPlan: (dayName: string) => void;
+    addGymPlan: (dayName: string) => string;
     addExerciseToPlan: (planId: string, moveName: string) => void;
     deleteGymPlan: (id: string) => void;
-    addExam: (name: string, date: string) => void;
+    deleteGymExercise: (planId: string, exerciseId: string) => void;
+    addExam: (name: string, date: string) => string;
     deleteExam: (id: string) => void;
     addTopic: (examId: string, name: string, goal: number) => void;
     deleteTopic: (id: string) => void;
-    addTask: (title: string, priority: 'low' | 'medium' | 'high', dueDate?: string) => void;
-    deleteTask: (id: string) => void;
+    addTask: (title: string, priority: 'low' | 'medium' | 'high', dueDate?: string, importance?: 'low' | 'medium' | 'high') => Promise<any>;
+    deleteTask: (id: string) => Promise<any>;
+    // AI
+    askAiCoach: (mode: 'quick' | 'plan', userMessage?: string) => Promise<string>;
+    generateAiGymPlan: (preferences?: any) => Promise<any>;
+    // Weekly Schedule
+    generateWeeklySchedule: (daysPerWeek: number, startDate: string) => Promise<any>;
+    completeScheduleItem: (id: string, isDone: boolean) => Promise<any>;
+    weeklySchedule: any[];
+    refreshSchedule: () => void;
 };
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -33,7 +43,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const [gymPlans, setGymPlans] = useState<GymPlan[]>([]);
     const [exams, setExams] = useState<Exam[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [gymMoves, setGymMoves] = useState<{ pageIndex: number; name: string; group: string; imageUrl?: string; }[]>([]);
+    const [gymMoves, setGymMoves] = useState<GymMove[]>([]);
+    const [weeklySchedule, setWeeklySchedule] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Initial Load
@@ -47,37 +58,54 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                     ...move,
                     imageUrl: `/gym_moves/ExerciseBook_page-${String(move.pageIndex).padStart(4, '0')}.jpg`
                 })));
+
+                // Fetch Schedule
+                api.getWeeklySchedule().then(s => setWeeklySchedule(s));
             }
             setLoading(false);
         });
     }, []);
 
-    const toggleTask = (id: string) => {
+    const refreshSchedule = () => {
+        api.getWeeklySchedule().then(s => setWeeklySchedule(s));
+    };
+
+    const toggleTask = async (id: string) => {
         setTasks(prev => {
             const task = prev.find(t => t.id === id);
             if (!task) return prev;
             const updated = { ...task, completed: !task.completed };
-            api.updateTask(updated);
+            // We can't await inside setState, so we call api outside?
+            // Actually, we can just find task before setState.
             return prev.map(t => t.id === id ? updated : t);
         });
+
+        // We need the updated status to send to API.
+        // Let's refactor to find task first.
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            const updated = { ...task, completed: !task.completed };
+            return await api.updateTask(updated);
+        }
     };
 
-    const addTask = (title: string, priority: 'low' | 'medium' | 'high', dueDate?: string) => {
+    const addTask = async (title: string, priority: 'low' | 'medium' | 'high', dueDate?: string, importance: 'low' | 'medium' | 'high' = 'medium') => {
         const newTask: Task = {
             id: crypto.randomUUID(),
             title,
             priority,
+            importance,
             completed: false,
             isMinimum: false,
             dueDate
         };
         setTasks(prev => [...prev, newTask]);
-        api.createTask(newTask);
+        return await api.createTask(newTask);
     };
 
-    const deleteTask = (id: string) => {
+    const deleteTask = async (id: string) => {
         setTasks(prev => prev.filter(t => t.id !== id));
-        api.deleteTask(id);
+        return await api.deleteTask(id);
     };
 
     // GYM ACTIONS
@@ -89,6 +117,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         };
         setGymPlans(prev => [...prev, newPlan]);
         api.createGymPlan(newPlan.id, dayName);
+        return newPlan.id;
     };
 
     const addExerciseToPlan = (planId: string, moveName: string) => {
@@ -116,6 +145,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         api.deleteGymPlan(id);
     };
 
+    const deleteGymExercise = (planId: string, exerciseId: string) => {
+        setGymPlans(prev => prev.map(p => {
+            if (p.id !== planId) return p;
+            return {
+                ...p,
+                exercises: p.exercises.filter(ex => ex.id !== exerciseId)
+            };
+        }));
+        api.deleteGymExercise(exerciseId);
+    };
+
     // STUDY ACTIONS
     const addExam = (name: string, date: string) => {
         const newExam: Exam = {
@@ -126,6 +166,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         };
         setExams(prev => [...prev, newExam]);
         api.createExam(newExam.id, name, date);
+        return newExam.id;
     };
 
     const deleteExam = (id: string) => {
@@ -156,7 +197,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
 
 
-    const logSet = (planId: string, exerciseId: string, weight: number, reps: number, feeling: string = 'normal') => {
+    const logSet = async (planId: string, exerciseId: string, weight: number, reps: number, feeling: string = 'normal', rpe?: number, restInterval?: number) => {
         // Optimistic Update
         setGymPlans(prev => prev.map(plan => {
             if (plan.id !== planId) return plan;
@@ -170,10 +211,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }));
 
         // API Call
-        api.logSet(planId, exerciseId, weight, reps, feeling);
+        return await api.logSet(planId, exerciseId, weight, reps, feeling, rpe, restInterval);
     };
 
-    const logStudySession = (examId: string, topicId: string, quality: 'light' | 'normal' | 'deep') => {
+    const logStudySession = async (examId: string, topicId: string, quality: 'light' | 'normal' | 'deep', environment?: string, interruptions?: number, preSessionActivity?: string) => {
         console.log(`Logged session for ${topicId} with quality: ${quality}`);
 
         // Optimistic Update
@@ -189,17 +230,52 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }));
 
         // API Call
-        api.logStudySession(examId, topicId, quality);
+        return await api.logStudySession(examId, topicId, quality, environment, interruptions, preSessionActivity);
+    };
+
+    // AI ACTIONS
+    const askAiCoach = async (mode: 'quick' | 'plan', userMessage?: string) => {
+        const mood = sessionStorage.getItem('userMood') || 'unknown';
+        const context = {
+            mood,
+            exams: exams,
+            tasks: tasks.filter(t => !t.completed),
+            gym: gymPlans // Maybe specific recent history would be better, but plans are context too
+        };
+        const res = await api.askAiCoach(context, mode, userMessage);
+        return res && res.answer ? res.answer : "I couldn't reach the coach right now.";
+    };
+
+    const generateAiGymPlan = async (preferences?: any) => {
+        // We need history. Ideally fetch from backend or derive from local 'gymPlans' if they have history. 
+        // But gymPlans is structure. Stats are in 'exercises'. 
+        // For simple MVP we pass the current plan structure as 'history'.
+        // Better: Fetch real history. But let's pass plans.
+        const res = await api.generateAiGymPlan(gymPlans, preferences);
+        return res;
+    };
+
+    const generateWeeklySchedule = async (daysPerWeek: number, startDate: string) => {
+        const res = await api.generateWeeklySchedule(daysPerWeek, startDate);
+        refreshSchedule();
+        return res;
+    };
+
+    const completeScheduleItem = async (id: string, isDone: boolean) => {
+        setWeeklySchedule(prev => prev.map(item => item.id === id ? { ...item, isDone: isDone ? 1 : 0 } : item));
+        return await api.completeScheduleItem(id, isDone);
     };
 
     return (
         <StoreContext.Provider value={{
             gymPlans, exams, tasks, loading,
             toggleTask, logSet, logStudySession,
-            addGymPlan, deleteGymPlan, addExerciseToPlan,
+            addGymPlan, deleteGymPlan, addExerciseToPlan, deleteGymExercise,
             addExam, deleteExam, addTopic, deleteTopic,
             addTask, deleteTask,
-            gymMoves
+            gymMoves,
+            askAiCoach, generateAiGymPlan,
+            weeklySchedule, generateWeeklySchedule, completeScheduleItem, refreshSchedule
         }}>
             {children}
         </StoreContext.Provider>
