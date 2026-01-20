@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../context/store';
-import { X, Sparkles, Send, BrainCircuit } from 'lucide-react';
+import { X, Sparkles, BrainCircuit } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export function AiCoachModal() {

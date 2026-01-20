@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import { useStore } from '../context/store';
-import { Plus, Calendar as CalendarIcon, Clock, Trash2, X, CheckCircle, LayoutGrid } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Trash2, CheckCircle, LayoutGrid } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
-import { useUserStats } from '../context/UserStatsContext';
+
 
 export function TasksPage() {
     const { tasks, toggleTask, addTask, deleteTask } = useStore();

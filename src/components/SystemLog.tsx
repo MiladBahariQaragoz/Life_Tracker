@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Terminal, X, Wifi, Database, BrainCircuit, Activity } from 'lucide-react';
+import { Terminal, X, Database, BrainCircuit } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { api } from '../lib/api';
 
@@ -33,9 +33,9 @@ export function SystemLog() {
             // Ideally we add a /health endpoint.
             try {
                 // Using init data as a "ping"
-                const start = Date.now();
+                // const start = Date.now();
                 const res = await api.getInitData();
-                const latency = Date.now() - start;
+                // const latency = Date.now() - start;
 
                 if (res) {
                     setStatus(s => ({ ...s, backend: 'connected' }));
