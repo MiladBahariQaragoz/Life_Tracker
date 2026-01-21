@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../context/store';
 import { useUserStats } from '../context/UserStatsContext';
-import { ChevronRight, Plus, Trash2, X, Trophy, Sparkles, Loader2, PlayCircle, Calendar, Dumbbell, MoreVertical, Edit2 } from 'lucide-react';
+import { ChevronRight, Plus, Trash2, X, Trophy, Sparkles, Loader2, PlayCircle, Calendar, Dumbbell, Edit2 } from 'lucide-react';
 import XPBreakdown from '../components/XPBreakdown';
 import type { XPResult } from '../types';
 
