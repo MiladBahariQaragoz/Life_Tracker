@@ -26,6 +26,7 @@ server/.env.*
 # Service account credentials
 server/service-account.json
 service-account.json
+server/service-account-oneline.txt
 
 # Database
 server/database.db
