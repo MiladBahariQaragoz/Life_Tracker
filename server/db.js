@@ -3,6 +3,9 @@ require('dotenv').config();
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    },
     // If you don't use DATABASE_URL, you can use individual params:
     // user: process.env.PGUSER,
     // host: process.env.PGHOST,
