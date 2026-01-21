@@ -671,6 +671,7 @@ app.get('/api/gym/schedule', async (req, res) => {
             const plan = plans.find(p => p.id === s.planId);
             return {
                 ...s,
+                isDone: Number(s.isDone || 0),
                 dayName: plan ? plan.dayName : 'Unknown Plan'
             };
         });
