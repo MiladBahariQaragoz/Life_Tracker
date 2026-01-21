@@ -13,8 +13,17 @@ dist-ssr
 *.local
 
 # Environment & Secrets
+# Root directory .env files
 .env
-.env.production
+.env.*
+!.env.example
+
+# Server directory .env files
+server/.env
+server/.env.*
+!server/.env.example
+
+# Service account credentials
 server/service-account.json
 service-account.json
 
