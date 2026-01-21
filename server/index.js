@@ -16,11 +16,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 async function runAI(prompt) {
+    if (!process.env.GEMINI_API_KEY) {
+        console.error("❌ GEMINI_API_KEY is missing from process.env");
+        throw new Error("AI Error: No API Key configured. Please check .env file.");
+    }
     try {
-        if (!process.env.GEMINI_API_KEY) {
-            console.error("❌ GEMINI_API_KEY is missing from process.env");
-            return "AI Error: No API Key configured. Please check .env file.";
-        }
         console.log("🤖 Sending prompt to Gemini...");
         const result = await model.generateContent(prompt);
         const response = await result.response;
@@ -29,9 +29,13 @@ async function runAI(prompt) {
         return text;
     } catch (e) {
         console.error("❌ Gemini API Error:", e);
-        return "AI Error: " + e.message;
+        throw new Error("AI Error: " + e.message);
     }
 }
+
+// ...
+
+
 
 const PORT = process.env.PORT || 3000;
 
@@ -632,7 +636,10 @@ app.post('/api/ai/coach', async (req, res) => {
         const { context, mode, userMessage } = req.body;
         const answer = await runAI(`Context: ${JSON.stringify(context)}. User: ${userMessage}`);
         res.json({ answer });
-    } catch (e) { res.status(500).json({ error: e.toString() }); }
+    } catch (e) {
+        console.error("AI Coach Error:", e);
+        res.status(500).json({ error: "AI Error: " + e.message });
+    }
 });
 
 app.post('/api/ai/gym_plan', async (req, res) => {
@@ -683,16 +690,28 @@ app.post('/api/gym/generate_weekly_schedule', async (req, res) => {
         if (plans.length === 0) return res.status(400).json({ error: "No templates" });
 
         const prompt = `Schedule ${daysPerWeek} days. Start ${startDate}. Templates: ${JSON.stringify(plans)}. JSON [{date, planId}].`;
-        let text = await runAI(prompt);
+
+        // --- AI CALL ---
+        let text;
+        try {
+            text = await runAI(prompt);
+        } catch (aiError) {
+            return res.status(500).json({ error: aiError.message });
+        }
+
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const scheduleItems = JSON.parse(text);
+
+        let scheduleItems;
+        try {
+            scheduleItems = JSON.parse(text);
+        } catch (jsonError) {
+            console.error("AI JSON Parse Error. Raw text:", text);
+            return res.status(500).json({ error: "Failed to parse AI response." });
+        }
 
         const crypto = require('crypto');
         for (const item of scheduleItems) {
             if (plans.find(p => p.id === item.planId)) {
-                // Check existing for date? simpler to append or overwrite in logic. 
-                // Here just append for simplicity or we can implement 'delete by date'
-                // Let's just insert.
                 await db.insert('GymWeeklySchedule', {
                     id: crypto.randomUUID(),
                     date: item.date,
