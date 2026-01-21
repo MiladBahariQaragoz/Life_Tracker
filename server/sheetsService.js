@@ -1,13 +1,18 @@
 const { google } = require('googleapis');
-const path = require('path');
 require('dotenv').config();
 
-const CREDENTIALS_PATH = path.join(__dirname, 'service-account.json');
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
-// Initialize Google Sheets API
+// Initialize Google Sheets API using environment variable
+if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+    throw new Error('❌ GOOGLE_SERVICE_ACCOUNT_JSON environment variable is required');
+}
+
+console.log('🔑 Using credentials from GOOGLE_SERVICE_ACCOUNT_JSON environment variable');
+const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+
 const auth = new google.auth.GoogleAuth({
-    keyFile: CREDENTIALS_PATH,
+    credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
@@ -221,12 +226,6 @@ async function initDb() {
         console.log("🔄 Initializing Google Sheets DB...");
 
         try {
-            // Validate credentials exist
-            const fs = require('fs');
-            if (!fs.existsSync(CREDENTIALS_PATH)) {
-                throw new Error(`❌ Service account file not found at: ${CREDENTIALS_PATH}`);
-            }
-
             if (!SPREADSHEET_ID) {
                 throw new Error('❌ GOOGLE_SHEET_ID not set in .env file');
             }
