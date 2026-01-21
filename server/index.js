@@ -34,7 +34,6 @@ async function runAI(prompt) {
 }
 
 const PORT = process.env.PORT || 3001;
-const CREDENTIALS_PATH = path.join(__dirname, 'service-account.json');
 
 // --- MIDDLEWARE ---
 app.use(cors());
@@ -52,9 +51,12 @@ db.initDb().catch(console.error);
 // --- CALENDAR HELPER ---
 async function getCalendar() {
     try {
-        await fs.access(CREDENTIALS_PATH).catch(() => { throw new Error('No Creds'); });
+        if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+            throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON not set');
+        }
+        const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
         const auth = new google.auth.GoogleAuth({
-            keyFile: CREDENTIALS_PATH,
+            credentials,
             scopes: ['https://www.googleapis.com/auth/calendar'],
         });
         return google.calendar({ version: 'v3', auth });
@@ -747,22 +749,14 @@ app.get('/api/analytics/activity', async (req, res) => {
 app.get('/api/debug/sheets', async (req, res) => {
     try {
         const meta = await db.getAll('UserXP'); // Try a simple read
-        // Also try to get raw metadata if possible, but db.getAll is good enough test.
-        // Let's try to access sheets directly using the same auth logic if possible, 
-        // but db is just an export.
-        // Let's just return what we have.
 
         let sheetId = process.env.GOOGLE_SHEET_ID;
-        let credsExist = false;
-        try {
-            await fs.access(CREDENTIALS_PATH);
-            credsExist = true;
-        } catch (e) { }
+        let credsExist = !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
 
         res.json({
             status: "Online",
             sheetId: sheetId,
-            credsFileExists: credsExist,
+            credsEnvVarSet: credsExist,
             dataRead: meta,
             message: "If dataRead is empty array, connection worked but sheet is empty OR connection failed silently (check logs)."
         });
