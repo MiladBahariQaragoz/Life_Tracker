@@ -1,11 +1,13 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+const connectionString = process.env.DATABASE_URL;
+// Force no-verify for DigitalOcean managed DBs where we trust the host but lack CA config
+const sslMode = connectionString && !connectionString.includes('sslmode=') ? '?sslmode=no-verify' : '';
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    },
+    connectionString: connectionString ? `${connectionString}${sslMode}` : undefined,
+    ssl: connectionString ? { rejectUnauthorized: false } : undefined
     // If you don't use DATABASE_URL, you can use individual params:
     // user: process.env.PGUSER,
     // host: process.env.PGHOST,
