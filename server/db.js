@@ -2,19 +2,28 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const connectionString = process.env.DATABASE_URL;
-// Force no-verify for DigitalOcean managed DBs where we trust the host but lack CA config
-const sslMode = connectionString && !connectionString.includes('sslmode=') ? '?sslmode=no-verify' : '';
+const isLocal = connectionString && (connectionString.includes('localhost') || connectionString.includes('127.0.0.1'));
+// Force no-verify for DigitalOcean managed DBs (only if not local)
+const sslMode = connectionString && !isLocal && !connectionString.includes('sslmode=') ? '?sslmode=no-verify' : '';
 
-const pool = new Pool({
+// Parse password manually to ensure it is a string (fixes numeric password SASL error)
+let config = {
     connectionString: connectionString ? `${connectionString}${sslMode}` : undefined,
-    ssl: connectionString ? { rejectUnauthorized: false } : undefined
-    // If you don't use DATABASE_URL, you can use individual params:
-    // user: process.env.PGUSER,
-    // host: process.env.PGHOST,
-    // database: process.env.PGDATABASE,
-    // password: process.env.PGPASSWORD,
-    // port: process.env.PGPORT,
-});
+    ssl: connectionString && !isLocal ? { rejectUnauthorized: false } : undefined
+};
+
+try {
+    if (connectionString) {
+        const url = new URL(connectionString);
+        if (url.password) {
+            config.password = String(url.password);
+        }
+    }
+} catch (e) {
+    // console.log('Could not parse URL for password extraction', e);
+}
+
+const pool = new Pool(config);
 
 // Test connection
 pool.on('error', (err, client) => {
