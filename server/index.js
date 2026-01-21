@@ -745,6 +745,73 @@ app.get('/api/analytics/activity', async (req, res) => {
 
 // ... (Other endpoints follow same pattern, ensuring all SQL is replaced)
 
+// --- ANALYTICS DETAILED ---
+app.get('/api/analytics/volume', async (req, res) => {
+    try {
+        const gymSessions = await db.getAll('GymSession');
+        const gymSets = await db.getAll('GymSet');
+        const gymExercises = await db.getAll('GymExercise');
+
+        // Map exercise ID to Name
+        const exerciseMap = {};
+        gymExercises.forEach(e => {
+            exerciseMap[e.id] = e.name;
+        });
+
+        const volumeData = [];
+
+        // Aggregate volume per exercise per day
+        gymSessions.forEach(session => {
+            if (!session.date) return;
+            const dateStr = session.date.split('T')[0];
+            const setsInSession = gymSets.filter(s => s.sessionId === session.id);
+
+            // Group by exercise within this session
+            setsInSession.forEach(set => {
+                const name = exerciseMap[set.exerciseId] || set.exerciseId;
+                const vol = Number(set.weight) * Number(set.reps);
+                if (vol > 0) {
+                    volumeData.push({
+                        date: dateStr,
+                        exercise: name,
+                        volume: vol
+                    });
+                }
+            });
+        });
+
+        // Sort by date
+        volumeData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        res.json(volumeData);
+    } catch (e) {
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
+app.get('/api/analytics/mastery', async (req, res) => {
+    try {
+        const topics = await db.getAll('ExamTopic');
+
+        const masteryData = topics.map(topic => {
+            const completed = Number(topic.sessionsCompleted) || 0;
+            const goal = Number(topic.totalSessionsGoal) || 1; // avoid div by 0
+            let score = (completed / goal) * 100;
+            if (score > 100) score = 100;
+
+            return {
+                subject: topic.name,
+                A: Math.round(score),
+                fullMark: 100
+            };
+        });
+
+        res.json(masteryData);
+    } catch (e) {
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
 // --- DEBUG ENDPOINT ---
 app.get('/api/debug/sheets', async (req, res) => {
     try {
