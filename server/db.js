@@ -3,18 +3,29 @@ require('dotenv').config();
 
 const connectionString = process.env.DATABASE_URL;
 const isLocal = connectionString && (connectionString.includes('localhost') || connectionString.includes('127.0.0.1'));
-// Force no-verify for DigitalOcean managed DBs (only if not local)
-const sslMode = connectionString && !isLocal && !connectionString.includes('sslmode=') ? '?sslmode=no-verify' : '';
+
+// Robust connection string validation for DigitalOcean
+let finalConnectionString = connectionString;
+
+if (connectionString && !isLocal) {
+    // 1. Force sslmode=no-verify (overrides 'require' | 'prefer' etc which fail with self-signed certs)
+    if (finalConnectionString.includes('sslmode=')) {
+        finalConnectionString = finalConnectionString.replace(/sslmode=[^&]+/, 'sslmode=no-verify');
+    } else {
+        const separator = finalConnectionString.includes('?') ? '&' : '?';
+        finalConnectionString = `${finalConnectionString}${separator}sslmode=no-verify`;
+    }
+}
 
 // Parse password manually to ensure it is a string (fixes numeric password SASL error)
 let config = {
-    connectionString: connectionString ? `${connectionString}${sslMode}` : undefined,
-    ssl: connectionString && !isLocal ? { rejectUnauthorized: false } : undefined
+    connectionString: finalConnectionString,
+    ssl: finalConnectionString && !isLocal ? { rejectUnauthorized: false } : undefined
 };
 
 try {
-    if (connectionString) {
-        const url = new URL(connectionString);
+    if (finalConnectionString) {
+        const url = new URL(finalConnectionString);
         if (url.password) {
             config.password = String(url.password);
         }
