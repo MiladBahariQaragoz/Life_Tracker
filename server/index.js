@@ -769,6 +769,15 @@ app.get('/api/debug/sheets', async (req, res) => {
     }
 });
 
+// --- SERVE STATIC FRONTEND ---
+// Serve static files from the dist directory
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Handle client-side routing - send index.html for all non-API routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
