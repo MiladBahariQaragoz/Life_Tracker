@@ -32,6 +32,7 @@ type StoreContextType = {
     generateAiGymPlan: (preferences?: any) => Promise<any>;
     // Weekly Schedule
     generateWeeklySchedule: (daysPerWeek: number, startDate: string) => Promise<any>;
+    updateScheduleItem: (date: string, planId: string | null) => Promise<any>;
     completeScheduleItem: (id: string, isDone: boolean) => Promise<any>;
     weeklySchedule: any[];
     refreshSchedule: () => void;
@@ -261,6 +262,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return res;
     };
 
+    const updateScheduleItem = async (date: string, planId: string | null) => {
+        // Optimistic update difficult without ID, but we can refresh or mock
+        // Let's just optimistic update by finding matching date
+        setWeeklySchedule(prev => {
+            const existing = prev.find(i => i.date === date);
+            if (!planId) {
+                return prev.filter(i => i.date !== date);
+            }
+            if (existing) {
+                return prev.map(i => i.date === date ? { ...i, planId, isDone: 0 } : i);
+            }
+            return [...prev, { id: 'temp-' + Date.now(), date, planId, isDone: 0 }];
+        });
+
+        const res = await api.updateWeeklySchedule(date, planId);
+        if (res.success) refreshSchedule(); // Fetch real IDs
+        return res;
+    };
+
     const completeScheduleItem = async (id: string, isDone: boolean) => {
         setWeeklySchedule(prev => prev.map(item => item.id === id ? { ...item, isDone: isDone ? 1 : 0 } : item));
         return await api.completeScheduleItem(id, isDone);
@@ -275,7 +295,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             addTask, deleteTask,
             gymMoves,
             askAiCoach, generateAiGymPlan,
-            weeklySchedule, generateWeeklySchedule, completeScheduleItem, refreshSchedule
+            weeklySchedule, generateWeeklySchedule, updateScheduleItem, completeScheduleItem, refreshSchedule
         }}>
             {children}
         </StoreContext.Provider>

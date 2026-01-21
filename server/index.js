@@ -736,6 +736,33 @@ app.post('/api/gym/schedule/complete', async (req, res) => {
     }
 });
 
+app.post('/api/gym/schedule/update', async (req, res) => {
+    try {
+        const { date, planId } = req.body;
+
+        // Remove existing for this date
+        const allSchedule = await db.getAll('GymWeeklySchedule');
+        const existing = allSchedule.find(s => s.date === date);
+
+        if (existing) {
+            await db.remove('GymWeeklySchedule', existing.id);
+        }
+
+        if (planId) {
+            const crypto = require('crypto');
+            await db.insert('GymWeeklySchedule', {
+                id: crypto.randomUUID(),
+                date,
+                planId,
+                isDone: 0
+            });
+        }
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
 // --- ANALYTICS ---
 app.get('/api/analytics/activity', async (req, res) => {
     try {

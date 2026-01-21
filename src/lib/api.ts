@@ -187,6 +187,10 @@ export const api = {
         return post('gym/generate_weekly_schedule', { daysPerWeek, startDate });
     },
 
+    async updateWeeklySchedule(date: string, planId: string | null) {
+        return post('gym/schedule/update', { date, planId });
+    },
+
     async completeScheduleItem(id: string, isDone: boolean) {
         return post('gym/schedule/complete', { id, isDone });
     }

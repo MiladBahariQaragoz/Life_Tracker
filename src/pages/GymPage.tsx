@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../context/store';
 import { useUserStats } from '../context/UserStatsContext';
-import { ChevronRight, Plus, Trash2, X, Trophy, Sparkles, Loader2, PlayCircle, Calendar, Dumbbell } from 'lucide-react';
+import { ChevronRight, Plus, Trash2, X, Trophy, Sparkles, Loader2, PlayCircle, Calendar, Dumbbell, MoreVertical, Edit2 } from 'lucide-react';
 import XPBreakdown from '../components/XPBreakdown';
 import type { XPResult } from '../types';
 
@@ -11,7 +11,7 @@ import { cn } from '../lib/utils';
 export function GymPage() {
     const {
         gymPlans, addGymPlan, deleteGymPlan, gymMoves, addExerciseToPlan,
-        weeklySchedule, generateWeeklySchedule, completeScheduleItem
+        weeklySchedule, generateWeeklySchedule, updateScheduleItem, completeScheduleItem
     } = useStore();
     const { addXp } = useUserStats();
 
@@ -193,10 +193,12 @@ export function GymPage() {
                             const scheduledItem = weeklySchedule.find(i => i.date === date);
                             const plan = scheduledItem ? gymPlans.find(p => p.id === scheduledItem.planId) : null;
 
+
+
                             return (
-                                <div key={date} className={cn("rounded-xl border p-4 flex flex-col min-h-[200px] relative transition-all",
+                                <div key={date} className={cn("rounded-xl border p-4 flex flex-col min-h-[200px] relative transition-all group/day",
                                     isToday ? "border-cyan-500/50 bg-cyan-950/10 ring-1 ring-cyan-500/20" : "border-zinc-800 bg-zinc-900/40",
-                                    !plan && "opacity-75"
+                                    !plan && "opacity-75 hover:opacity-100"
                                 )}>
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="text-center">
@@ -206,6 +208,15 @@ export function GymPage() {
                                         {plan && (
                                             <div className={cn("w-2 h-2 rounded-full", scheduledItem.isDone ? "bg-green-500" : "bg-cyan-500")} />
                                         )}
+
+                                        {/* Edit Controls (Hover) */}
+                                        <div className="opacity-0 group-hover/day:opacity-100 transition-opacity absolute top-2 right-2 flex gap-1">
+                                            <PlanSelector
+                                                currentPlanId={plan?.id || null}
+                                                plans={gymPlans}
+                                                onSelect={(newPlanId) => updateScheduleItem(date, newPlanId)}
+                                            />
+                                        </div>
                                     </div>
 
                                     {plan ? (
@@ -229,8 +240,18 @@ export function GymPage() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex-1 flex items-center justify-center">
+                                        <div className="flex-1 flex flex-col items-center justify-center gap-2">
                                             <div className="text-sm text-zinc-600 italic">Rest Day</div>
+                                            <PlanSelector
+                                                currentPlanId={null}
+                                                plans={gymPlans}
+                                                onSelect={(newPlanId) => updateScheduleItem(date, newPlanId)}
+                                                trigger={
+                                                    <button className="text-xs text-cyan-600 hover:text-cyan-400 font-bold border border-cyan-900 bg-cyan-950/50 px-3 py-1 rounded-full opacity-0 group-hover/day:opacity-100 transition-all">
+                                                        + Add Workout
+                                                    </button>
+                                                }
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -470,6 +491,47 @@ function ExerciseItem({ exercise, planId, onViewImage, onLogComplete }: { exerci
                         <button onClick={handleDone} className="w-full bg-white text-black font-bold py-2 rounded-lg hover:bg-zinc-200 transition-colors">Mark as Done</button>
                     </div>
                 </div>
+            )}
+        </div>
+    );
+}
+
+function PlanSelector({ currentPlanId, plans, onSelect, trigger }: { currentPlanId: string | null, plans: any[], onSelect: (id: string | null) => void, trigger?: React.ReactNode }) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div className="relative">
+            <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
+                {trigger || (
+                    <button className="p-1 text-zinc-500 hover:text-white rounded bg-zinc-900/50 hover:bg-zinc-800 transition-colors">
+                        <Edit2 className="w-3 h-3" />
+                    </button>
+                )}
+            </div>
+            {isOpen && (
+                <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="max-h-60 overflow-y-auto">
+                            <button
+                                onClick={() => { onSelect(null); setIsOpen(false); }}
+                                className={cn("w-full text-left px-4 py-2 text-sm hover:bg-zinc-800 transition-colors", !currentPlanId ? "text-cyan-400 font-bold" : "text-zinc-400")}
+                            >
+                                Rest Day / Clear
+                            </button>
+                            <div className="h-px bg-zinc-800 my-1" />
+                            {plans.map(p => (
+                                <button
+                                    key={p.id}
+                                    onClick={() => { onSelect(p.id); setIsOpen(false); }}
+                                    className={cn("w-full text-left px-4 py-2 text-sm hover:bg-zinc-800 transition-colors", currentPlanId === p.id ? "text-cyan-400 font-bold" : "text-zinc-300")}
+                                >
+                                    {p.dayName}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );
