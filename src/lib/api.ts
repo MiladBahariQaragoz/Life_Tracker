@@ -1,7 +1,9 @@
 import type { GymPlan, Exam, Task, GymMove } from '../types';
 
-// Hardcoded to local backend as GAS is being removed
-const API_URL = 'http://127.0.0.1:3001';
+// Dynamic API URL: use same origin in production, localhost in development
+const API_URL = import.meta.env.PROD
+    ? window.location.origin  // Production: same domain as frontend
+    : 'http://localhost:3000'; // Development: local backend
 
 export type InitData = {
     gymPlans: GymPlan[];
