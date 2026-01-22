@@ -18,7 +18,7 @@ export type ExamTopic = {
     id: string;
     name: string;
     sessionsCompleted: number;
-    totalSessionsInitial: number; // Formerly totalSessionsGoal
+    totalSessionsGoal: number;
 };
 
 export type Exam = {

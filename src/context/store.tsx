@@ -24,6 +24,7 @@ type StoreContextType = {
     addExam: (name: string, date: string) => string;
     deleteExam: (id: string) => void;
     addTopic: (examId: string, name: string, goal: number) => void;
+    updateTopic: (topicId: string, goal: number) => void;
     deleteTopic: (id: string) => void;
     addTask: (title: string, priority: 'low' | 'medium' | 'high', dueDate?: string, importance?: 'low' | 'medium' | 'high') => Promise<any>;
     deleteTask: (id: string) => Promise<any>;
@@ -179,7 +180,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const newTopic = {
             id: crypto.randomUUID(),
             name,
-            totalSessionsInitial: goal,
+            totalSessionsGoal: goal,
             sessionsCompleted: 0
         };
         setExams(prev => prev.map(e => {
@@ -195,6 +196,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             topics: e.topics.filter(t => t.id !== topicId)
         })));
         api.deleteTopic(topicId);
+    };
+
+    const updateTopic = (topicId: string, goal: number) => {
+        setExams(prev => prev.map(e => ({
+            ...e,
+            topics: e.topics.map(t => {
+                if (t.id !== topicId) return t;
+                return { ...t, totalSessionsGoal: goal };
+            })
+        })));
+        api.updateTopic(topicId, goal);
     };
 
 
@@ -291,7 +303,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             gymPlans, exams, tasks, loading,
             toggleTask, logSet, logStudySession,
             addGymPlan, deleteGymPlan, addExerciseToPlan, deleteGymExercise,
-            addExam, deleteExam, addTopic, deleteTopic,
+            addExam, deleteExam, addTopic, deleteTopic, updateTopic,
             addTask, deleteTask,
             gymMoves,
             askAiCoach, generateAiGymPlan,

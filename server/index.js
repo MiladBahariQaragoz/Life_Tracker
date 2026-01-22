@@ -492,6 +492,16 @@ app.post('/api/study/delete_topic', async (req, res) => {
     }
 });
 
+app.post('/api/study/update_topic', async (req, res) => {
+    try {
+        const { id, totalSessionsGoal } = req.body;
+        await db.update('ExamTopic', id, { totalSessionsGoal: Number(totalSessionsGoal) });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.toString() });
+    }
+});
+
 // TASKS (Simplified - No XP)
 app.post('/api/tasks/create', async (req, res) => {
     try {

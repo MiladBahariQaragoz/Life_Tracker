@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../context/store';
 import { useUserStats } from '../context/UserStatsContext';
-import { ArrowLeft, Skull, Sword, X, Trash2 } from 'lucide-react';
+import { ArrowLeft, Skull, Sword, X, Trash2, Edit2, Check } from 'lucide-react';
 import XPBreakdown from '../components/XPBreakdown';
 import type { XPResult } from '../types';
 import { cn } from '../lib/utils';
@@ -10,7 +10,7 @@ import { cn } from '../lib/utils';
 export function ExamDetailPage() {
     const { examId } = useParams();
     const navigate = useNavigate();
-    const { exams, logStudySession, deleteTopic } = useStore();
+    const { exams, logStudySession, deleteTopic, updateTopic } = useStore();
     const { addXp } = useUserStats();
 
     const exam = exams.find(e => e.id === examId);
@@ -19,6 +19,9 @@ export function ExamDetailPage() {
     const [environment, setEnvironment] = useState('Home');
     const [interruptions, setInterruptions] = useState('');
     const [preSessionActivity, setPreSessionActivity] = useState('');
+
+    const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
+    const [editingGoal, setEditingGoal] = useState<number>(0);
 
     const [lastXPResult, setLastXPResult] = useState<XPResult | null>(null);
 
@@ -88,7 +91,7 @@ export function ExamDetailPage() {
             {/* Topics List */}
             <div className="space-y-3">
                 {exam.topics.map(topic => {
-                    const progress = Math.min(100, Math.round((topic.sessionsCompleted / topic.totalSessionsInitial) * 100));
+                    const progress = Math.min(100, Math.round((topic.sessionsCompleted / topic.totalSessionsGoal) * 100));
                     const isExpanded = activeTopic === topic.id;
 
                     return (
@@ -100,7 +103,45 @@ export function ExamDetailPage() {
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between mb-2">
                                         <h3 className="font-medium text-zinc-200">{topic.name}</h3>
-                                        <span className="text-xs text-zinc-500">{topic.sessionsCompleted}/{topic.totalSessionsInitial}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-zinc-500">{topic.sessionsCompleted} /</span>
+                                            {editingTopicId === topic.id ? (
+                                                <div className="flex items-center gap-1">
+                                                    <input
+                                                        type="number"
+                                                        value={editingGoal}
+                                                        onChange={(e) => setEditingGoal(Number(e.target.value))}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="w-12 bg-zinc-950 border border-zinc-700 rounded px-1 py-0.5 text-xs text-white"
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            updateTopic(topic.id, editingGoal);
+                                                            setEditingTopicId(null);
+                                                        }}
+                                                        className="text-emerald-500 hover:text-emerald-400"
+                                                    >
+                                                        <Check className="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1 group/edit">
+                                                    <span className="text-xs text-zinc-500">{topic.totalSessionsGoal}</span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditingTopicId(topic.id);
+                                                            setEditingGoal(topic.totalSessionsGoal);
+                                                        }}
+                                                        className="opacity-0 group-hover/edit:opacity-100 text-zinc-600 hover:text-zinc-400 transition-opacity"
+                                                    >
+                                                        <Edit2 className="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
                                         <div
@@ -181,7 +222,7 @@ export function ExamDetailPage() {
 }
 
 function BossBattleCard({ exam }: { exam: any }) {
-    const totalSessions = exam.topics.reduce((acc: number, t: any) => acc + t.totalSessionsInitial, 0);
+    const totalSessions = exam.topics.reduce((acc: number, t: any) => acc + t.totalSessionsGoal, 0);
     const completedSessions = exam.topics.reduce((acc: number, t: any) => acc + t.sessionsCompleted, 0);
     const hp = Math.max(0, totalSessions - completedSessions);
     const maxHp = totalSessions;

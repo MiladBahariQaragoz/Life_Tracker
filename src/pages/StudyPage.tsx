@@ -143,7 +143,7 @@ export function StudyPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
                 {exams.map((exam) => {
-                    const totalSessions = exam.topics.reduce((acc, t) => acc + t.totalSessionsInitial, 0);
+                    const totalSessions = exam.topics.reduce((acc, t) => acc + t.totalSessionsGoal, 0);
                     const completedSessions = exam.topics.reduce((acc, t) => acc + t.sessionsCompleted, 0);
                     const progress = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
 

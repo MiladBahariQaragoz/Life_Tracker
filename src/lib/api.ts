@@ -123,6 +123,9 @@ export const api = {
     async deleteTopic(id: string) {
         return post('study/delete_topic', { id });
     },
+    async updateTopic(id: string, totalSessionsGoal: number) {
+        return post('study/update_topic', { id, totalSessionsGoal });
+    },
 
     // TASKS
     async createTask(task: Task) {
