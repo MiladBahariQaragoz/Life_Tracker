@@ -49,4 +49,3 @@ server/db.json
 *.sw?
 .agents/  
 skills-lock.json  
-system.md 
