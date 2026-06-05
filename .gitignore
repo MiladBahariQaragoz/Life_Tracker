@@ -47,3 +47,6 @@ server/db.json
 *.njsproj
 *.sln
 *.sw?
+.agents/  
+skills-lock.json  
+system.md 

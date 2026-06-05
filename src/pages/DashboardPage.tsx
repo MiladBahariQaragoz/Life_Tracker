@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { useStore } from '../context/store';
-import { CheckCircle2, Circle, Dumbbell, BookOpen, AlertCircle, TrendingUp, Sparkles, Loader2 } from 'lucide-react';
+import { Dumbbell, BookOpen, AlertCircle, TrendingUp, Sparkles, Loader2, ArrowUpRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -23,7 +23,7 @@ export function DashboardPage() {
             const advice = await askAiCoach('plan');
             setPlanAdvice(advice);
         } catch (e) {
-            setPlanAdvice("Failed to generate plan.");
+            setPlanAdvice("ERR: AI_COACH_UNREACHABLE");
         } finally {
             setIsPlanning(false);
         }
@@ -40,17 +40,14 @@ export function DashboardPage() {
     }, []);
 
     const today = new Date();
-    const formattedDate = format(today, 'EEEE, MMMM do');
+    const formattedDate = format(today, 'yyyy.MM.dd');
 
-    // Tasks Logic
     const minimumTasks = tasks.filter(t => t.isMinimum);
     const tasksDone = tasks.filter(t => t.completed).length;
     const tasksTotal = tasks.length;
 
-    // Gym Logic (Mock: Assume first plan is today's for demo)
     const todaysWorkout = gymPlans.length > 0 ? gymPlans[0] : null;
 
-    // Study Logic
     const sortedExams = [...exams].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const nextExam = sortedExams.length > 0 ? sortedExams[0] : null;
     const daysUntilExam = nextExam
@@ -58,132 +55,156 @@ export function DashboardPage() {
         : 0;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-
+        <div className="space-y-12 animate-in fade-in duration-700 pb-10 font-sans">
+            
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-800 pb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">{formattedDate}</h1>
-                    <p className="text-zinc-500">Focus on the essential.</p>
+                    <h1 className="font-display text-5xl font-bold text-white uppercase tracking-tight">STATUS.OVERVIEW</h1>
+                    <div className="flex items-center gap-4 mt-2">
+                        <span className="bg-zinc-200 text-zinc-950 px-2 py-0.5 text-xs font-bold font-mono">SYS.DATE</span>
+                        <p className="text-zinc-400 font-mono text-sm tracking-widest">{formattedDate}</p>
+                    </div>
                 </div>
 
                 <button
                     onClick={handlePlanDay}
                     disabled={isPlanning}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 rounded-lg font-semibold text-white shadow-lg shadow-cyan-900/20 transition-all disabled:opacity-50"
+                    className="group flex items-center gap-3 px-6 py-3 bg-zinc-200 hover:bg-white text-zinc-950 font-bold font-mono text-sm uppercase tracking-widest transition-all disabled:opacity-50"
                 >
                     {isPlanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    Plan My Day
+                    <span>Initialize Plan</span>
+                    <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                 </button>
             </div>
 
             {planAdvice && (
-                <div className="bg-gradient-to-r from-zinc-900 to-zinc-950 border border-cyan-900/30 rounded-xl p-6 shadow-xl animate-in slide-in-from-top-4">
-                    <div className="flex items-center gap-2 mb-3 text-cyan-400">
+                <div className="bg-zinc-900 border-l-4 border-zinc-200 p-6 animate-in slide-in-from-top-4">
+                    <div className="flex items-center gap-3 mb-4 text-zinc-200">
                         <Sparkles className="w-5 h-5" />
-                        <h3 className="font-bold">AI Strategic Plan</h3>
+                        <h3 className="font-mono font-bold uppercase tracking-widest text-sm">AI.DIRECTIVE</h3>
                     </div>
-                    <div className="text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-zinc-400 leading-relaxed whitespace-pre-wrap font-mono text-sm">
                         {planAdvice}
                     </div>
                     <button
                         onClick={() => setPlanAdvice(null)}
-                        className="mt-4 text-xs text-zinc-500 hover:text-white"
+                        className="mt-6 text-xs text-zinc-600 hover:text-zinc-300 font-mono uppercase tracking-widest transition-colors"
                     >
-                        Dismiss
+                        [ Acknowledge & Dismiss ]
                     </button>
                 </div>
             )}
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 gap-1 sm:grid-cols-3 bg-zinc-800 p-[1px]">
                 {/* Gym Stat */}
                 <div
                     onClick={() => navigate('/gym')}
-                    className="group cursor-pointer rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 transition-colors hover:border-zinc-700 hover:bg-zinc-900"
+                    className="group cursor-pointer bg-zinc-950 p-6 transition-colors hover:bg-zinc-900 relative overflow-hidden"
                 >
-                    <div className="flex items-center gap-3 text-emerald-400 mb-2">
-                        <Dumbbell className="h-5 w-5" />
-                        <span className="font-semibold">Gym</span>
+                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Dumbbell className="h-32 w-32" />
                     </div>
-                    <p className="text-lg font-medium text-white">{todaysWorkout ? todaysWorkout.dayName : 'No Plan'}</p>
-                    <p className="text-sm text-zinc-500">{todaysWorkout ? todaysWorkout.exercises.length : 0} Exercises</p>
+                    <div className="flex items-center gap-3 text-zinc-500 mb-6 font-mono text-xs uppercase tracking-widest">
+                        <Dumbbell className="h-4 w-4" />
+                        <span>Physical</span>
+                    </div>
+                    <p className="font-display text-2xl font-bold text-white uppercase mb-1">{todaysWorkout ? todaysWorkout.dayName : 'STANDBY'}</p>
+                    <p className="font-mono text-xs text-zinc-500">{todaysWorkout ? `${todaysWorkout.exercises.length} PROTOCOLS` : 'NO ACTIVE PLAN'}</p>
                 </div>
 
                 {/* Study Stat */}
                 <div
                     onClick={() => navigate('/study')}
-                    className="group cursor-pointer rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 transition-colors hover:border-zinc-700 hover:bg-zinc-900"
+                    className="group cursor-pointer bg-zinc-950 p-6 transition-colors hover:bg-zinc-900 relative overflow-hidden"
                 >
-                    <div className="flex items-center gap-3 text-blue-400 mb-2">
-                        <BookOpen className="h-5 w-5" />
-                        <span className="font-semibold">Study</span>
+                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <BookOpen className="h-32 w-32" />
                     </div>
-                    <p className="text-lg font-medium text-white">{nextExam ? nextExam.name : 'No Exams'}</p>
-                    <p className="text-sm text-zinc-500">{nextExam ? `${daysUntilExam} days left` : 'All caught up'}</p>
+                    <div className="flex items-center gap-3 text-zinc-500 mb-6 font-mono text-xs uppercase tracking-widest">
+                        <BookOpen className="h-4 w-4" />
+                        <span>Cognitive</span>
+                    </div>
+                    <p className="font-display text-2xl font-bold text-white uppercase mb-1">{nextExam ? nextExam.name : 'CLEAR'}</p>
+                    <p className="font-mono text-xs text-zinc-500">{nextExam ? `T-MINUS ${daysUntilExam} DAYS` : 'NO PENDING EXAMS'}</p>
                 </div>
 
                 {/* Tasks Stat */}
                 <div
                     onClick={() => navigate('/tasks')}
-                    className="group cursor-pointer rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 transition-colors hover:border-zinc-700 hover:bg-zinc-900"
+                    className="group cursor-pointer bg-zinc-950 p-6 transition-colors hover:bg-zinc-900 relative overflow-hidden"
                 >
-                    <div className="flex items-center gap-3 text-amber-400 mb-2">
-                        <AlertCircle className="h-5 w-5" />
-                        <span className="font-semibold">Tasks</span>
+                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <AlertCircle className="h-32 w-32" />
                     </div>
-                    <p className="text-lg font-medium text-white">{tasksTotal - tasksDone} Remaining</p>
-                    <p className="text-sm text-zinc-500">{tasksDone} Completed</p>
+                    <div className="flex items-center gap-3 text-zinc-500 mb-6 font-mono text-xs uppercase tracking-widest">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>Operations</span>
+                    </div>
+                    <p className="font-display text-2xl font-bold text-white uppercase mb-1">{tasksTotal - tasksDone} PENDING</p>
+                    <p className="font-mono text-xs text-zinc-500">{tasksDone} RESOLVED</p>
                 </div>
             </div>
 
-            {/* Analytics Section */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-indigo-400" />
-                    <h2 className="text-xl font-semibold text-white">Analytics</h2>
-                </div>
-
-                <ProductivityHeatmap data={activityData} />
-
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <VolumeProgression data={volumeData} />
-                    <TopicMasteryRadar data={masteryData} />
-                </div>
-            </section>
-
-
             {/* Today's Minimum Section */}
-            <section>
-                <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-white">Today's Minimum</h2>
-                    <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Non-Negotiable</span>
+            <section className="border-t border-zinc-800 pt-8">
+                <div className="mb-6 flex items-center justify-between">
+                    <h2 className="font-mono text-sm font-bold text-white uppercase tracking-widest">Priority.Targets</h2>
+                    <span className="bg-red-900/30 text-red-500 px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-widest">Non-Negotiable</span>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {minimumTasks.map(task => (
                         <div
                             key={task.id}
                             onClick={() => toggleTask(task.id)}
                             className={cn(
-                                "flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all active:scale-[0.98]",
+                                "group flex cursor-pointer items-center gap-4 border p-4 transition-all",
                                 task.completed
-                                    ? "border-zinc-900 bg-zinc-950/50 opacity-50"
-                                    : "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
+                                    ? "border-zinc-800 bg-zinc-950 opacity-50 grayscale"
+                                    : "border-zinc-700 bg-zinc-900 hover:border-zinc-500"
                             )}
                         >
-                            {task.completed ? (
-                                <CheckCircle2 className="h-6 w-6 text-emerald-500 shrink-0" />
-                            ) : (
-                                <Circle className="h-6 w-6 text-zinc-600 shrink-0" />
-                            )}
+                            <div className={cn(
+                                "flex items-center justify-center w-6 h-6 border transition-colors",
+                                task.completed ? "border-zinc-600 bg-zinc-800" : "border-zinc-400 group-hover:border-white"
+                            )}>
+                                {task.completed && <div className="w-3 h-3 bg-zinc-400" />}
+                            </div>
                             <span className={cn(
-                                "text-lg font-medium",
-                                task.completed ? "text-zinc-500 line-through" : "text-white"
+                                "font-mono text-sm tracking-wide uppercase",
+                                task.completed ? "text-zinc-600 line-through" : "text-white group-hover:text-zinc-200"
                             )}>
                                 {task.title}
                             </span>
                         </div>
                     ))}
+                    {minimumTasks.length === 0 && (
+                        <div className="border border-dashed border-zinc-800 p-8 text-center text-zinc-600 font-mono text-xs uppercase tracking-widest">
+                            No priority targets defined
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {/* Analytics Section */}
+            <section className="space-y-8 border-t border-zinc-800 pt-8">
+                <div className="flex items-center gap-3">
+                    <TrendingUp className="h-4 w-4 text-zinc-500" />
+                    <h2 className="font-mono text-sm font-bold text-white uppercase tracking-widest">Telemetry.Data</h2>
+                </div>
+
+                <div className="border border-zinc-800 bg-zinc-950 p-6">
+                    <ProductivityHeatmap data={activityData} />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div className="border border-zinc-800 bg-zinc-950 p-6">
+                        <VolumeProgression data={volumeData} />
+                    </div>
+                    <div className="border border-zinc-800 bg-zinc-950 p-6">
+                        <TopicMasteryRadar data={masteryData} />
+                    </div>
                 </div>
             </section>
 
