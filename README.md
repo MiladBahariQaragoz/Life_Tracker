@@ -1,5 +1,7 @@
 # Life Tracker
 
+**Live Demo:** [https://life-tracker-six-omega.vercel.app/](https://life-tracker-six-omega.vercel.app/)
+
 Life Tracker is a comprehensive full-stack application built with React, Node.js, and Google Sheets API. It gamifies and tracks your daily productivity, gym progress, and study sessions, enriched with AI coaching capabilities.
 
 ## Features
